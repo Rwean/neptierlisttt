@@ -5,6 +5,9 @@ Cloudflare Pages build ayarları:
 - Build command: `npm run build`
 - Build output: `dist`
 - Framework preset: Vite
+- Deploy command: bos birakilmali
+
+Not: Bu proje Cloudflare Pages projesidir. `npx wrangler deploy` Worker deploy komutudur ve bu proje icin kullanilmamalidir.
 
 Discord canlı veri için önerilen yöntem:
 
