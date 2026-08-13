@@ -3,9 +3,5 @@ pages_build_output_dir = "dist"
 compatibility_date = "2026-08-13"
 
 [vars]
-DISCORD_GUILD_ID = "YOUR_GUILD_ID"
-DISCORD_CLIENT_ID = "YOUR_DISCORD_CLIENT_ID"
-
-[[kv_namespaces]]
-binding = "TIERLIST_KV"
-id = "YOUR_KV_NAMESPACE_ID"
+DISCORD_GUILD_ID = "1458912927519080522"
+DISCORD_CLIENT_ID = "1466586888113619055"
