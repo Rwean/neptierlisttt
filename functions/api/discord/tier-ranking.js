@@ -61,7 +61,11 @@ export async function onRequestOptions() {
 export async function onRequestPost(context) {
   const apiKey = context.request.headers.get('x-api-key');
 
-  if (!context.env.NEPTIERLIST_API_KEY || apiKey !== context.env.NEPTIERLIST_API_KEY) {
+  if (!context.env.NEPTIERLIST_API_KEY) {
+    return json({ error: 'Server API key is not configured' }, { status: 500 });
+  }
+
+  if (apiKey !== context.env.NEPTIERLIST_API_KEY) {
     return json({ error: 'Unauthorized' }, { status: 401 });
   }
 
