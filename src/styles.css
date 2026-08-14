@@ -377,7 +377,7 @@ h2 {
 
 .tier-icons {
   display: grid;
-  grid-template-columns: repeat(8, 40px);
+  grid-template-columns: repeat(9, 40px);
   gap: 8px;
   align-items: center;
 }
@@ -546,7 +546,7 @@ h2 {
 
   .tier-icons {
     grid-column: 1 / -1;
-    grid-template-columns: repeat(8, minmax(34px, 1fr));
+    grid-template-columns: repeat(9, minmax(34px, 1fr));
   }
 
   .tier-pill {

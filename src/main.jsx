@@ -79,14 +79,15 @@ const defaultPlayers = [
 ];
 
 const modes = [
-  { icon: Swords, label: 'Kılıç' },
-  { icon: ShieldCheck, label: 'Kristal' },
-  { icon: Activity, label: 'İksir' },
-  { icon: Crown, label: 'Netherite' },
-  { icon: Gauge, label: 'Balta' },
+  { icon: Swords, label: 'Sword' },
+  { icon: ShieldCheck, label: 'Crystal' },
+  { icon: Activity, label: 'Diapot' },
+  { icon: Crown, label: 'Nethpot' },
+  { icon: Gauge, label: 'Axe' },
   { icon: Trophy, label: 'UHC' },
-  { icon: Users, label: 'Takım' },
-  { icon: Flame, label: 'Mace' }
+  { icon: Users, label: 'SMP' },
+  { icon: Flame, label: 'Mace' },
+  { icon: Sparkles, label: 'OGV' }
 ];
 
 function loadPlayers() {
@@ -262,7 +263,7 @@ function PlayerRow({ player, index }) {
         {player.tiers.map((tier, tierIndex) => {
           const ModeIcon = modes[tierIndex % modes.length].icon;
           return (
-            <span className="tier-pill" title={`${modes[tierIndex].label} ${tier}`} key={`${tier}-${tierIndex}`}>
+            <span className="tier-pill" title={`${modes[tierIndex]?.label || 'Tier'} ${tier}`} key={`${tier}-${tierIndex}`}>
               <ModeIcon size={16} />
               <b>{tier}</b>
             </span>
