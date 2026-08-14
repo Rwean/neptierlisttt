@@ -1,8 +1,8 @@
 const fallbackPlayers = [
-  { id: 1, name: 'Marlowww', rank: 'Combat Grandmaster', points: 450, region: 'NA' },
-  { id: 2, name: 'ItzRealMe', rank: 'Combat Master', points: 330, region: 'NA' },
-  { id: 3, name: 'X Kisisi', rank: 'Combat Master', points: 326, region: 'EU' },
-  { id: 4, name: 'Y Kisisi', rank: 'Combat Master', points: 290, region: 'NA' }
+  { id: 1, name: 'Marlowww', rank: 'Savaş Büyük Ustası', points: 450, region: 'TR' },
+  { id: 2, name: 'ItzRealMe', rank: 'Savaş Ustası', points: 330, region: 'TR' },
+  { id: 3, name: 'X Kişisi', rank: 'Savaş Ustası', points: 326, region: 'TR' },
+  { id: 4, name: 'Y Kişisi', rank: 'Savaş Ustası', points: 290, region: 'TR' }
 ];
 
 export async function onRequestGet(context) {
@@ -12,7 +12,7 @@ export async function onRequestGet(context) {
 
   return Response.json({
     updatedAt: new Date().toISOString(),
-    players: stored || fallbackPlayers
+    players: (stored || fallbackPlayers).map((player) => ({ ...player, region: 'TR' }))
   });
 }
 
@@ -29,7 +29,7 @@ export async function onRequestPost(context) {
   }
 
   if (context.env.TIERLIST_KV) {
-    await context.env.TIERLIST_KV.put('players', JSON.stringify(body.players));
+    await context.env.TIERLIST_KV.put('players', JSON.stringify(body.players.map((player) => ({ ...player, region: 'TR' }))));
   }
 
   return Response.json({ ok: true, count: body.players.length });
