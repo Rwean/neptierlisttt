@@ -5,3 +5,10 @@ compatibility_date = "2026-08-13"
 [vars]
 DISCORD_GUILD_ID = "1458912927519080522"
 DISCORD_CLIENT_ID = "1466586888113619055"
+
+# Oyuncu verisi, başvurular, tier göçleri ve haberler bu KV alanında saklanır.
+# NOT: Bu binding'i Cloudflare panelinden de eklemen gerekiyor (aşağıdaki id yer tutucudur).
+# Pages > Proje > Settings > Functions > KV namespace bindings > "TIERLIST_KV" ekle.
+[[kv_namespaces]]
+binding = "TIERLIST_KV"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
