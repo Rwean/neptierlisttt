@@ -1,71 +1,41 @@
-const categoryOrder = ['sword', 'crystal', 'diapot', 'nethpot', 'axe', 'uhc', 'smp', 'mace', 'ogv'];
+const corsHeaders = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'POST, OPTIONS',
+  'access-control-allow-headers': 'content-type, x-api-key'
+};
 
-const rankByScore = [
-  { min: 3600, rank: 'Savaş Büyük Ustası' },
-  { min: 2600, rank: 'Savaş Ustası' },
-  { min: 1600, rank: 'Usta Oyuncu' },
-  { min: 800, rank: 'Tecrübeli Oyuncu' },
-  { min: 1, rank: 'Oyuncu' }
-];
+const TIER_POINTS = {
+  LT3: 10, HT3: 20, LT2: 30, HT2: 40, LT1: 50, HT1: 60
+};
+const CATEGORIES = ['sword', 'crystal', 'diapot', 'nethpot', 'axe', 'uhc', 'smp', 'mace', 'ogv'];
+
+function calculateTotalScore(tiers) {
+  if (!tiers) return 0;
+  return CATEGORIES.reduce((sum, cat) => {
+    const tier = typeof tiers[cat] === 'string' ? tiers[cat] : (tiers[cat]?.tier || 'LT3');
+    return sum + (TIER_POINTS[String(tier).toUpperCase()] || 0);
+  }, 0);
+}
 
 function json(data, init = {}) {
   return Response.json(data, {
     ...init,
-    headers: {
-      'access-control-allow-origin': '*',
-      ...(init.headers || {})
-    }
+    headers: { ...corsHeaders, ...(init.headers || {}) }
   });
-}
-
-function getTierLabel(member, category) {
-  return member.tiers?.[category]?.tier?.toUpperCase() || '-';
-}
-
-function getRank(totalScore) {
-  return rankByScore.find((item) => totalScore >= item.min)?.rank || 'Oyuncu';
-}
-
-function getAccent(index) {
-  const accents = ['#e7b84e', '#9fb4b8', '#b06f4f', '#7587a5', '#4da3c7', '#7fb069'];
-  return accents[index % accents.length];
-}
-
-function toPlayer(member, index) {
-  return {
-    id: member.discordId,
-    discordId: member.discordId,
-    name: member.displayName || member.username || 'Bilinmeyen Oyuncu',
-    username: member.username || '',
-    rank: getRank(Number(member.totalScore || 0)),
-    points: Number(member.totalScore || 0),
-    region: 'TR',
-    avatar: member.avatarUrl || member.displayName?.[0]?.toUpperCase() || member.username?.[0]?.toUpperCase() || '?',
-    avatarUrl: member.avatarUrl || '',
-    accent: getAccent(index),
-    tiers: categoryOrder.map((category) => getTierLabel(member, category))
-  };
 }
 
 export async function onRequestOptions() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'access-control-allow-origin': '*',
-      'access-control-allow-methods': 'POST, OPTIONS',
-      'access-control-allow-headers': 'content-type, x-api-key'
-    }
-  });
+  return new Response(null, { status: 204, headers: corsHeaders });
 }
 
 export async function onRequestPost(context) {
   const apiKey = context.request.headers.get('x-api-key');
 
-  if (!context.env.NEPTIERLIST_API_KEY) {
+  const serverKey = context.env.NEPTIERLIST_API_KEY || context.env.ADMIN_API_TOKEN;
+  if (!serverKey) {
     return json({ error: 'Server API key is not configured' }, { status: 500 });
   }
-
-  if (apiKey !== context.env.NEPTIERLIST_API_KEY) {
+  if (apiKey !== serverKey) {
     return json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -80,15 +50,44 @@ export async function onRequestPost(context) {
     return json({ error: 'members array required' }, { status: 400 });
   }
 
-  const players = body.members
-    .map(toPlayer)
-    .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'tr'));
+  const supabaseUrl = context.env.VITE_SUPABASE_URL || context.env.SUPABASE_URL;
+  const supabaseKey = context.env.SUPABASE_SERVICE_ROLE_KEY || context.env.VITE_SUPABASE_ANON_KEY || context.env.SUPABASE_ANON_KEY;
 
-  if (context.env.TIERLIST_KV) {
-    await context.env.TIERLIST_KV.put('players', JSON.stringify(players));
-    await context.env.TIERLIST_KV.put('discord-tier-payload', JSON.stringify(body));
-    await context.env.TIERLIST_KV.put('discord-tier-updated-at', body.updatedAt || new Date().toISOString());
+  const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  let upserted = 0;
+  const errors = [];
+
+  for (const member of body.members) {
+    const tiers = member.tiers || {};
+    const totalScore = member.totalScore != null
+      ? Number(member.totalScore)
+      : calculateTotalScore(tiers);
+
+    const displayName = member.displayName || member.username || 'Bilinmeyen';
+    const mcUsername = member.minecraftUsername || member.username || '';
+    const discordId = String(member.discordId || '');
+    const avatarUrl = member.avatarUrl || '';
+
+    const payload = {
+      discord_id: discordId || null,
+      minecraft_username: mcUsername,
+      display_name: displayName,
+      avatar_url: avatarUrl,
+      region: 'TR',
+      total_score: totalScore,
+      tiers: tiers,
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await supabase
+      .from('players')
+      .upsert(payload, { onConflict: 'discord_id' });
+
+    if (error) errors.push({ player: displayName, error: error.message });
+    else upserted++;
   }
 
-  return json({ ok: true, count: players.length });
+  return json({ ok: true, count: upserted, errors: errors.length ? errors : undefined });
 }
